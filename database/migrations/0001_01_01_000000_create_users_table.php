@@ -17,6 +17,10 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('avatar')->nullable();
+            $table->enum('plan', ['free', 'pro'])->default('free');
+            $table->integer('upload_count')->default(0);
+            $table->index('email');
             $table->rememberToken();
             $table->timestamps();
         });
