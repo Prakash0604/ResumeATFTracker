@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\Facade;
+use Illuminate\Support\ServiceProvider;
 return [
 
     /*
@@ -123,4 +125,11 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'providers' => ServiceProvider::defaultProviders()->merge([
+        \Laravel\Sanctum\SanctumServiceProvider::class,
+ 
+        \App\Providers\AppServiceProvider::class,
+        \App\Providers\AuthServiceProvider::class, 
+        \App\Providers\EventServiceProvider::class,     
+    ])->toArray(),
 ];

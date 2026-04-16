@@ -1,332 +1,194 @@
 @extends('layouts.app')
-
-@section('title', 'Dashboard')
-@section('page-title', 'Dashboard')
+@section('title','Dashboard')
+@section('page-title','Dashboard')
 
 @section('content')
+@php
+    $user = auth()->user();
+@endphp
 
-{{-- ═══ STAT CARDS ═══════════════════════════════════════════ --}}
-<div class="row g-3 mb-4">
-
-    <div class="col-6 col-lg-3 fade-up stagger-1">
-        <div class="stat-card" style="--stat-color:var(--accent);--stat-bg:rgba(108,99,255,0.12);">
-            <div class="stat-icon">📄</div>
-            <div class="stat-value">{{ $stats['total_resumes'] }}</div>
-            <div class="stat-label">Resumes Analyzed</div>
-        </div>
+{{-- STATS ROW --}}
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;">
+    <div class="stat-card fade-up" style="--c:#6c63ff">
+        <span class="stat-icon">📄</span>
+        <div class="stat-num">{{ $stats['total_resumes'] }}</div>
+        <div class="stat-lbl">Resumes Analyzed</div>
     </div>
-
-    <div class="col-6 col-lg-3 fade-up stagger-2">
-        <div class="stat-card" style="--stat-color:var(--sky);--stat-bg:var(--sky-dim);">
-            <div class="stat-icon">📊</div>
-            <div class="stat-value">{{ $stats['avg_score'] ?: '—' }}</div>
-            <div class="stat-label">Average ATS Score</div>
-        </div>
+    <div class="stat-card fade-up" style="--c:#38bdf8;animation-delay:.05s">
+        <span class="stat-icon">📊</span>
+        <div class="stat-num">{{ $stats['avg_score'] ?: '—' }}</div>
+        <div class="stat-lbl">Average Score</div>
     </div>
-
-    <div class="col-6 col-lg-3 fade-up stagger-3">
-        <div class="stat-card" style="--stat-color:var(--emerald);--stat-bg:var(--emerald-dim);">
-            <div class="stat-icon">🏆</div>
-            <div class="stat-value">{{ $stats['best_score'] ?: '—' }}</div>
-            <div class="stat-label">Best Score</div>
-        </div>
+    <div class="stat-card fade-up" style="--c:#10d9a0;animation-delay:.1s">
+        <span class="stat-icon">🏆</span>
+        <div class="stat-num">{{ $stats['best_score'] ?: '—' }}</div>
+        <div class="stat-lbl">Best Score</div>
     </div>
-
-    <div class="col-6 col-lg-3 fade-up stagger-4">
-        <div class="stat-card" style="--stat-color:var(--amber);--stat-bg:var(--amber-dim);">
-            <div class="stat-icon">⏳</div>
-            <div class="stat-value">{{ $stats['pending_count'] }}</div>
-            <div class="stat-label">Processing</div>
-        </div>
+    <div class="stat-card fade-up" style="--c:#fbbf24;animation-delay:.15s">
+        <span class="stat-icon">⏳</span>
+        <div class="stat-num">{{ $stats['pending_count'] }}</div>
+        <div class="stat-lbl">Processing</div>
     </div>
 </div>
 
-{{-- ═══ MAIN GRID ═════════════════════════════════════════════ --}}
-<div class="row g-4">
+{{-- MAIN GRID --}}
+<div style="display:grid;grid-template-columns:1fr 340px;gap:16px;margin-bottom:16px;">
 
-    {{-- Score Trend Chart --}}
-    <div class="col-lg-7 fade-up">
-        <div class="card-dark" style="padding:24px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
-                <div>
-                    <h3 style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:2px;">
-                        ATS Score Trend
-                    </h3>
-                    <p style="font-size:13px;color:var(--text-secondary);margin:0;">
-                        How your resume scores have improved over time
-                    </p>
-                </div>
-                <span class="tag tag-emerald">Last 10</span>
+    {{-- Score trend chart --}}
+    <div class="card card-p fade-up">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+            <div>
+                <div style="font-size:14px;font-weight:700;color:#f8fafc;margin-bottom:2px;">Score Trend</div>
+                <div style="font-size:12px;color:#475569;">ATS scores over your last 10 uploads</div>
             </div>
-
-            @if($scoreTrend->count() > 0)
-                <canvas id="trendChart" height="220"></canvas>
-            @else
-                <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
-                    <div style="font-size:48px;margin-bottom:12px;">📈</div>
-                    <p style="font-size:14px;">Upload your first resume to see score trends</p>
-                </div>
-            @endif
+            <span class="tag tag-green">Last 10</span>
         </div>
+        @if($scoreTrend->count() > 0)
+            <canvas id="trendChart" height="100"></canvas>
+        @else
+            <div style="text-align:center;padding:50px 0;color:#334155;">
+                <div style="font-size:36px;margin-bottom:10px;">📈</div>
+                <div style="font-size:13px;">Upload your first resume to see trends</div>
+            </div>
+        @endif
     </div>
 
-    {{-- Recent Resumes --}}
-    <div class="col-lg-5 fade-up stagger-1">
-        <div class="card-dark" style="padding:24px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-                <h3 style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;">
-                    Recent Resumes
-                </h3>
-                <a href="{{ route('resumes.index') }}"
-                   style="font-size:13px;color:var(--accent-light);text-decoration:none;">
-                    View all <i class="bi bi-arrow-right"></i>
-                </a>
-            </div>
-
-            @forelse($recentResumes as $resume)
-                <a href="{{ $resume->status === 'analyzed' ? route('resumes.show', $resume) : '#' }}"
-                   style="text-decoration:none;display:block;"
-                   class="resume-row">
-                    <div style="
-                        display:flex;align-items:center;gap:14px;
-                        padding:14px 0;
-                        border-bottom:1px solid var(--border);
-                        transition:all 0.2s ease;
-                    " class="resume-row-inner">
-
-                        {{-- File Icon --}}
-                        <div style="
-                            width:40px;height:40px;
-                            background:rgba(108,99,255,0.12);
-                            border-radius:8px;
-                            display:flex;align-items:center;justify-content:center;
-                            font-size:18px;flex-shrink:0;
-                        ">
-                            @if($resume->file_type === 'pdf') 📕
-                            @elseif($resume->file_type === 'docx') 📘
-                            @else 📄 @endif
-                        </div>
-
-                        {{-- Name & Meta --}}
-                        <div style="flex:1;min-width:0;">
-                            <div style="
-                                font-size:13px;font-weight:600;
-                                white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-                                color:var(--text-primary);
-                            ">{{ $resume->original_filename }}</div>
-                            <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">
-                                {{ $resume->created_at->diffForHumans() }}
-                                @if($resume->target_job_title)
-                                    · <span style="color:var(--text-secondary);">{{ $resume->target_job_title }}</span>
-                                @endif
-                            </div>
-                        </div>
-
-                        {{-- Score or Status --}}
-                        <div style="text-align:right;flex-shrink:0;">
-                            @if($resume->status === 'analyzed' && $resume->analysis)
-                                @php
-                                    $score = $resume->analysis->overall_score;
-                                    $color = $score >= 80 ? 'var(--emerald)' : ($score >= 60 ? 'var(--sky)' : ($score >= 40 ? 'var(--amber)' : 'var(--rose)'));
-                                @endphp
-                                <div style="
-                                    font-family:'Syne',sans-serif;
-                                    font-weight:800;font-size:18px;
-                                    color:{{ $color }};
-                                ">{{ $score }}</div>
-                                <div style="font-size:10px;color:var(--text-muted);">/ 100</div>
-                            @elseif($resume->status === 'processing')
-                                <span class="processing-pulse"></span>
-                            @elseif($resume->status === 'failed')
-                                <i class="bi bi-exclamation-circle" style="color:var(--rose);font-size:18px;"></i>
-                            @else
-                                <i class="bi bi-hourglass" style="color:var(--text-muted);font-size:18px;"></i>
-                            @endif
-                        </div>
-                    </div>
-                </a>
-            @empty
-                <div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
-                    <div style="font-size:40px;margin-bottom:10px;">📭</div>
-                    <p style="font-size:14px;">No resumes yet</p>
-                    <button class="btn-primary-custom" style="margin-top:12px;"
-                            data-bs-toggle="modal" data-bs-target="#uploadModal">
-                        <i class="bi bi-plus-lg"></i> Upload First Resume
-                    </button>
-                </div>
-            @endforelse
+    {{-- Recent resumes --}}
+    <div class="card card-p fade-up" style="animation-delay:.05s;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <div style="font-size:14px;font-weight:700;color:#f8fafc;">Recent</div>
+            <a href="{{ route('resumes.index') }}" style="font-size:12px;color:#6c63ff;text-decoration:none;">
+                View all →
+            </a>
         </div>
-    </div>
 
-    {{-- Common Missing Keywords --}}
+        @forelse($recentResumes as $resume)
+        @php
+            $sc = $resume->analysis?->overall_score;
+            $scColor = $sc === null ? '#475569' : ($sc>=80?'#10d9a0':($sc>=60?'#38bdf8':($sc>=40?'#fbbf24':'#f87171')));
+        @endphp
+        <a href="{{ $resume->status==='analyzed' ? route('resumes.show',$resume) : '#' }}"
+           style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #1e2130;text-decoration:none;transition:opacity .15s;"
+           onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
+            <div style="font-size:18px;flex-shrink:0;">
+                @if($resume->file_type==='pdf')📕@elseif(in_array($resume->file_type,['docx','doc']))📘@else📄@endif
+            </div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:12px;font-weight:500;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    {{ $resume->candidate_name ?? $resume->original_filename }}
+                </div>
+                <div style="font-size:11px;color:#475569;margin-top:1px;">
+                    {{ $resume->created_at->diffForHumans() }}
+                    @if($resume->target_job_title)· {{ \Illuminate\Support\Str::limit($resume->target_job_title,22) }}@endif
+                </div>
+            </div>
+            <div style="flex-shrink:0;text-align:right;">
+                @if($resume->status==='analyzed' && $sc !== null)
+                    <div style="font-size:16px;font-weight:700;color:{{ $scColor }};font-family:'JetBrains Mono',monospace;line-height:1;">{{ $sc }}</div>
+                    <div style="font-size:10px;color:#334155;">/100</div>
+                @elseif($resume->status==='processing')
+                    <span style="width:8px;height:8px;background:#fbbf24;border-radius:50%;display:inline-block;animation:pulse 1.2s infinite;"></span>
+                @elseif($resume->status==='failed')
+                    <span style="color:#f87171;font-size:14px;">⚠</span>
+                @else
+                    <span style="color:#334155;font-size:13px;">⏳</span>
+                @endif
+            </div>
+        </a>
+        @empty
+        <div style="text-align:center;padding:32px 0;color:#334155;">
+            <div style="font-size:28px;margin-bottom:8px;">📭</div>
+            <div style="font-size:12px;margin-bottom:14px;">No resumes yet</div>
+            <button class="btn-primary" style="font-size:12px;padding:7px 14px;" onclick="$('#openUploadTop').click()">
+                Upload First Resume
+            </button>
+        </div>
+        @endforelse
+    </div>
+</div>
+
+{{-- BOTTOM ROW --}}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+
+    {{-- Missing keywords --}}
     @if($topMissingKeywords->count() > 0)
-    <div class="col-12 fade-up">
-        <div class="card-dark" style="padding:24px;">
-            <div style="margin-bottom:16px;">
-                <h3 style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:4px;">
-                    🔑 Commonly Missing Keywords
-                </h3>
-                <p style="font-size:13px;color:var(--text-secondary);margin:0;">
-                    Keywords that frequently appear in job descriptions but are missing from your resumes
-                </p>
-            </div>
-            <div class="keyword-cloud">
-                @foreach($topMissingKeywords as $kw)
-                    <span class="keyword-tag missing">
-                        <i class="bi bi-plus-circle" style="font-size:10px;"></i>
-                        {{ $kw }}
-                    </span>
-                @endforeach
-            </div>
+    <div class="card card-p fade-up">
+        <div style="font-size:14px;font-weight:700;color:#f8fafc;margin-bottom:4px;">🔑 Commonly Missing Keywords</div>
+        <div style="font-size:12px;color:#475569;margin-bottom:14px;">Keywords absent from your resumes but common in job postings</div>
+        <div class="kw-cloud">
+            @foreach($topMissingKeywords as $kw)
+                <span class="kw missing">+ {{ $kw }}</span>
+            @endforeach
         </div>
     </div>
     @endif
 
-    {{-- Quick Tips --}}
-    <div class="col-lg-6 fade-up">
-        <div class="card-dark" style="padding:24px;">
-            <h3 style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:20px;">
-                💡 ATS Quick Tips
-            </h3>
-            @php
-            $tips = [
-                ['icon' => '📝', 'title' => 'Use Standard Section Headers', 'desc' => 'Use "Work Experience" not "Where I\'ve Been". ATS bots match exact phrases.', 'tag' => 'Format'],
-                ['icon' => '🔑', 'title' => 'Mirror Job Description Keywords', 'desc' => 'Copy exact phrases from the job posting — ATS matches strings literally.', 'tag' => 'Keywords'],
-                ['icon' => '📊', 'title' => 'Quantify Every Achievement', 'desc' => '"Grew revenue 34%" beats "Improved revenue" every time.', 'tag' => 'Content'],
-                ['icon' => '🚫', 'title' => 'Avoid Tables & Text Boxes', 'desc' => 'Most ATS systems cannot parse text inside tables or graphics.', 'tag' => 'ATS'],
-            ];
-            @endphp
-            @foreach($tips as $tip)
-                <div style="display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);">
-                    <div style="font-size:20px;flex-shrink:0;margin-top:2px;">{{ $tip['icon'] }}</div>
-                    <div>
-                        <div style="font-size:14px;font-weight:600;margin-bottom:3px;display:flex;align-items:center;gap:8px;">
-                            {{ $tip['title'] }}
-                            <span class="tag tag-muted" style="font-size:10px;">{{ $tip['tag'] }}</span>
-                        </div>
-                        <div style="font-size:13px;color:var(--text-secondary);">{{ $tip['desc'] }}</div>
-                    </div>
+    {{-- Quick tips --}}
+    <div class="card card-p fade-up">
+        <div style="font-size:14px;font-weight:700;color:#f8fafc;margin-bottom:14px;">💡 ATS Quick Tips</div>
+        @foreach([
+            ['Use exact section headers','"Work Experience" not "My Journey" — ATS matches strings literally.','Format'],
+            ['Quantify every achievement','"Grew revenue 34%" beats "improved revenue" every time.','Content'],
+            ['Mirror the job description','Copy exact phrases from the posting into your bullet points.','Keywords'],
+            ['Avoid tables and columns','Most ATS parsers skip text inside tables or multi-column layouts.','ATS'],
+        ] as [$title,$desc,$label])
+        <div style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #1e2130;">
+            <div style="flex:1;">
+                <div style="font-size:12px;font-weight:600;color:#e2e8f0;margin-bottom:2px;display:flex;align-items:center;gap:6px;">
+                    {{ $title }} <span class="tag tag-gray" style="font-size:10px;">{{ $label }}</span>
                 </div>
-            @endforeach
+                <div style="font-size:12px;color:#475569;">{{ $desc }}</div>
+            </div>
         </div>
+        @endforeach
     </div>
-
-    {{-- Upload CTA --}}
-    <div class="col-lg-6 fade-up stagger-1">
-        <div class="card-dark card-accent" style="padding:32px;text-align:center;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;">
-            <div style="font-size:52px;margin-bottom:16px;">🚀</div>
-            <h3 style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:10px;">
-                Ready to optimize?
-            </h3>
-            <p style="color:var(--text-secondary);font-size:14px;max-width:300px;margin:0 auto 24px;">
-                Upload your resume and get a detailed ATS score with actionable feedback in under 30 seconds.
-            </p>
-            <button class="btn-primary-custom" style="padding:14px 32px;font-size:15px;"
-                    data-bs-toggle="modal" data-bs-target="#uploadModal">
-                <i class="bi bi-cpu"></i> Analyze Now — It's Free
-            </button>
-        </div>
-    </div>
-
 </div>
 
+<style>
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+</style>
 @endsection
 
 @push('scripts')
-<script>
-$(function () {
-
-    // ── Score Trend Chart ──────────────────────────────────
+{{-- <script>
+$(function(){
     @if($scoreTrend->count() > 0)
-    const trendData = @json($scoreTrend);
-
-    const ctx = document.getElementById('trendChart').getContext('2d');
-
-    const gradient = ctx.createLinearGradient(0, 0, 0, 220);
-    gradient.addColorStop(0, 'rgba(108,99,255,0.3)');
-    gradient.addColorStop(1, 'rgba(108,99,255,0)');
-
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: trendData.map(d => d.date),
-            datasets: [{
-                label: 'ATS Score',
-                data:  trendData.map(d => d.score),
-                fill:  true,
-                backgroundColor: gradient,
-                borderColor:  '#6c63ff',
-                borderWidth:  2.5,
-                pointBackgroundColor: '#8b84ff',
-                pointRadius: 5,
-                pointHoverRadius: 7,
-                tension: 0.4,
-            }]
+    var td = @json($scoreTrend);
+    var ctx = document.getElementById('trendChart').getContext('2d');
+    var g = ctx.createLinearGradient(0,0,0,180);
+    g.addColorStop(0,'rgba(108,99,255,.2)');g.addColorStop(1,'rgba(108,99,255,0)');
+    new Chart(ctx,{
+        type:'line',
+        data:{
+            labels:td.map(d=>d.date),
+            datasets:[{label:'Score',data:td.map(d=>d.score),fill:true,backgroundColor:g,borderColor:'#6c63ff',borderWidth:2,pointBackgroundColor:'#a5b4fc',pointRadius:4,tension:.4}]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            interaction: { mode: 'index', intersect: false },
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: '#161820',
-                    borderColor: '#252836',
-                    borderWidth: 1,
-                    titleColor: '#eef0f8',
-                    bodyColor:  '#8b90a8',
-                    padding: 12,
-                    callbacks: {
-                        label: ctx => ` ATS Score: ${ctx.raw}/100`,
-                    }
-                }
-            },
-            scales: {
-                x: {
-                    grid:   { color: '#252836', drawBorder: false },
-                    ticks:  { color: '#545872', font: { family: "'DM Sans'", size: 12 } }
-                },
-                y: {
-                    min:  0,
-                    max: 100,
-                    grid:   { color: '#252836', drawBorder: false },
-                    ticks:  { color: '#545872', font: { family: "'JetBrains Mono'", size: 11 }, stepSize: 20 }
-                }
+        options:{
+            responsive:true,maintainAspectRatio:false,
+            plugins:{legend:{display:false},tooltip:{backgroundColor:'#12141e',borderColor:'#2d3148',borderWidth:1,titleColor:'#f8fafc',bodyColor:'#94a3b8',padding:10,callbacks:{label:c=>' Score: '+c.raw+'/100'}}},
+            scales:{
+                x:{grid:{color:'#1e2130',drawBorder:false},ticks:{color:'#475569',font:{family:'Inter',size:11}}},
+                y:{min:0,max:100,grid:{color:'#1e2130',drawBorder:false},ticks:{color:'#475569',font:{family:'JetBrains Mono',size:10},stepSize:25}}
             }
         }
     });
     @endif
 
-    // ── Poll processing resumes ────────────────────────────
-    @php $processingIds = $recentResumes->where('status', 'processing')->pluck('id'); @endphp
-    @if($processingIds->count() > 0)
-        const processingIds = @json($processingIds);
-        let pollInterval = setInterval(function () {
-            let remaining = 0;
-            processingIds.forEach(function (id) {
-                $.get('/api/resumes/' + id + '/status', function (data) {
-                    if (data.status === 'analyzed') {
-                        showToast('✅ Resume analysis complete! Score: ' + data.score, 'success');
-                        setTimeout(() => location.reload(), 1500);
-                    } else if (data.status === 'failed') {
-                        showToast('❌ Analysis failed for resume #' + id, 'error');
-                    } else {
-                        remaining++;
-                    }
-                });
+    // Poll any processing resumes
+    @php $pIds = $recentResumes->whereIn('status',['uploaded','processing'])->pluck('id'); @endphp
+    @if($pIds->count())
+    var ids = @json($pIds);
+    var iv = setInterval(function(){
+        var done=true;
+        ids.forEach(function(id){
+            $.get('/api/resumes/'+id+'/status',function(d){
+                if(d.status==='analyzed'){showToast('✅ Analysis done! Score: '+d.score,'green');setTimeout(function(){location.reload()},1000);}
+                else if(d.status!=='failed') done=false;
             });
-            if (remaining === 0) clearInterval(pollInterval);
-        }, 4000);
-    @endif
-
-    // ── Resume row hover effect ────────────────────────────
-    $('.resume-row').on('mouseenter mouseleave', function (e) {
-        $(this).find('.resume-row-inner').css({
-            'background':    e.type === 'mouseenter' ? 'rgba(108,99,255,0.04)' : 'transparent',
-            'border-radius': e.type === 'mouseenter' ? '8px' : '0',
-            'padding-left':  e.type === 'mouseenter' ? '8px' : '0',
         });
-    });
+        if(done) clearInterval(iv);
+    },4000);
+    @endif
 });
-</script>
+</script> --}}
 @endpush

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * TextExtractorService
@@ -41,9 +42,11 @@ class TextExtractorService
     private function extractFromPdf(string $filePath): string
     {
         // Strategy 1: CLI pdftotext (preferred — handles complex layouts)
-        if ($this->commandExists('pdftotext')) {
+        $pdftotextPath = '/usr/bin/pdftotext';
+        if (file_exists($pdftotextPath)) {
             $escaped = escapeshellarg($filePath);
-            $output  = shell_exec("pdftotext -layout {$escaped} - 2>/dev/null");
+            $output  = shell_exec("{$pdftotextPath} -layout {$escaped} - 2>/dev/null");
+            Log::info('pdftotext execution', ['path' => $pdftotextPath, 'length' => strlen($output ?? ''), 'file' => $filePath]);
             if (!empty(trim($output ?? ''))) {
                 return $this->cleanText($output);
             }

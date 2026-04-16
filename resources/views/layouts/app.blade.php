@@ -1,1233 +1,432 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'ATF Resume Tracker') — ResumeIQ</title>
-
-    <!-- Bootstrap 5 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
+    <title>@yield('title','ResumeIQ') — ATS Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <!-- Google Fonts: Syne + DM Sans -->
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
-    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
     <style>
-        /* ═══════════════════════════════════════════════════════
-           DESIGN SYSTEM — ATF Resume Tracker
-           Theme: Dark Precision / Technical Elegance
-           Fonts: Syne (headings) + DM Sans (body) + JetBrains Mono (code/data)
-           ═══════════════════════════════════════════════════════ */
-
-        :root {
-            --bg-base:        #0a0b0f;
-            --bg-surface:     #111318;
-            --bg-card:        #161820;
-            --bg-card-hover:  #1c1f28;
-            --bg-input:       #1a1d26;
-            --border:         #252836;
-            --border-bright:  #363a52;
-
-            --text-primary:   #eef0f8;
-            --text-secondary: #8b90a8;
-            --text-muted:     #545872;
-
-            --accent:         #6c63ff;
-            --accent-glow:    rgba(108, 99, 255, 0.25);
-            --accent-light:   #8b84ff;
-            --accent-dim:     #3d3888;
-
-            --emerald:        #10d9a0;
-            --emerald-dim:    rgba(16, 217, 160, 0.15);
-            --amber:          #f5a623;
-            --amber-dim:      rgba(245, 166, 35, 0.15);
-            --rose:           #ff4f6a;
-            --rose-dim:       rgba(255, 79, 106, 0.15);
-            --sky:            #38bdf8;
-            --sky-dim:        rgba(56, 189, 248, 0.15);
-
-            --score-excellent: #10d9a0;
-            --score-good:      #38bdf8;
-            --score-fair:      #f5a623;
-            --score-poor:      #ff4f6a;
-
-            --radius-sm:  6px;
-            --radius-md:  12px;
-            --radius-lg:  18px;
-            --radius-xl:  24px;
-
-            --shadow-sm:  0 2px 8px rgba(0,0,0,0.4);
-            --shadow-md:  0 4px 24px rgba(0,0,0,0.5);
-            --shadow-lg:  0 8px 48px rgba(0,0,0,0.6);
-            --shadow-accent: 0 0 40px rgba(108, 99, 255, 0.15);
-
-            --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-slow: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-
-            --sidebar-w: 260px;
-            --topbar-h:  64px;
-        }
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        html { scroll-behavior: smooth; }
-
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--bg-base);
-            color: var(--text-primary);
-            font-size: 15px;
-            line-height: 1.6;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* ── Typography ─────────────────────────────────────── */
-        h1, h2, h3, h4, h5, h6,
-        .font-display { font-family: 'Syne', sans-serif; }
-
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-
-        /* ── Scrollbar ──────────────────────────────────────── */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg-base); }
-        ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 99px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
-
-        /* ══════════════════════════════════════════════════════
-           LAYOUT
-           ══════════════════════════════════════════════════════ */
-
-        .app-wrapper {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* ── Sidebar ─────────────────────────────────────────── */
-        .sidebar {
-            width: var(--sidebar-w);
-            min-height: 100vh;
-            background: var(--bg-surface);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            left: 0; top: 0; bottom: 0;
-            z-index: 100;
-            transition: transform var(--transition-slow);
-        }
-
-        .sidebar-brand {
-            padding: 24px 24px 20px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .brand-icon {
-            width: 38px; height: 38px;
-            background: linear-gradient(135deg, var(--accent), var(--accent-light));
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 18px;
-            box-shadow: 0 0 20px var(--accent-glow);
-            flex-shrink: 0;
-        }
-
-        .brand-name {
-            font-family: 'Syne', sans-serif;
-            font-weight: 800;
-            font-size: 18px;
-            color: var(--text-primary);
-            letter-spacing: -0.3px;
-        }
-
-        .brand-tagline {
-            font-size: 10px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .sidebar-nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
-
-        .nav-section-label {
-            font-size: 10px;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            padding: 8px 12px 6px;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 14px;
-            border-radius: var(--radius-sm);
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            transition: all var(--transition);
-            margin-bottom: 2px;
-            position: relative;
-        }
-
-        .nav-link i { font-size: 16px; flex-shrink: 0; }
-
-        .nav-link:hover {
-            color: var(--text-primary);
-            background: var(--bg-card);
-        }
-
-        .nav-link.active {
-            color: var(--accent-light);
-            background: rgba(108, 99, 255, 0.12);
-        }
-
-        .nav-link.active::before {
-            content: '';
-            position: absolute;
-            left: 0; top: 6px; bottom: 6px;
-            width: 3px;
-            background: var(--accent);
-            border-radius: 0 3px 3px 0;
-        }
-
-        .nav-badge {
-            margin-left: auto;
-            background: var(--accent-dim);
-            color: var(--accent-light);
-            font-size: 10px;
-            font-weight: 700;
-            padding: 2px 7px;
-            border-radius: 99px;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .sidebar-footer {
-            padding: 16px 12px;
-            border-top: 1px solid var(--border);
-        }
-
-        .user-card {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 12px;
-            border-radius: var(--radius-sm);
-            background: var(--bg-card);
-        }
-
-        .user-avatar {
-            width: 34px; height: 34px;
-            background: linear-gradient(135deg, var(--accent-dim), var(--accent));
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 13px;
-            font-weight: 700;
-            color: #fff;
-            flex-shrink: 0;
-        }
-
-        .user-name { font-size: 13px; font-weight: 600; }
-        .user-plan {
-            font-size: 10px;
-            color: var(--emerald);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        /* ── Main Content ─────────────────────────────────────── */
-        .main-content {
-            margin-left: var(--sidebar-w);
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-
-        /* ── Topbar ───────────────────────────────────────────── */
-        .topbar {
-            height: var(--topbar-h);
-            background: var(--bg-surface);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            padding: 0 32px;
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            gap: 16px;
-        }
-
-        .topbar-title {
-            font-family: 'Syne', sans-serif;
-            font-size: 18px;
-            font-weight: 700;
-            flex: 1;
-        }
-
-        .topbar-actions { display: flex; align-items: center; gap: 10px; }
-
-        /* ── Page Content ─────────────────────────────────────── */
-        .page-content {
-            flex: 1;
-            padding: 32px;
-        }
-
-        /* ══════════════════════════════════════════════════════
-           COMPONENTS
-           ══════════════════════════════════════════════════════ */
-
-        /* ── Cards ───────────────────────────────────────────── */
-        .card-dark {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            transition: border-color var(--transition), box-shadow var(--transition);
-        }
-
-        .card-dark:hover {
-            border-color: var(--border-bright);
-            box-shadow: var(--shadow-md);
-        }
-
-        .card-dark.card-accent {
-            border-color: var(--accent-dim);
-            box-shadow: var(--shadow-accent);
-        }
-
-        /* ── Stat Cards ──────────────────────────────────────── */
-        .stat-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 24px;
-            position: relative;
-            overflow: hidden;
-            transition: all var(--transition);
-        }
-
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 2px;
-            background: var(--stat-color, var(--accent));
-        }
-
-        .stat-card:hover {
-            transform: translateY(-2px);
-            border-color: var(--border-bright);
-            box-shadow: var(--shadow-md);
-        }
-
-        .stat-icon {
-            width: 44px; height: 44px;
-            background: var(--stat-bg, rgba(108,99,255,0.12));
-            border-radius: var(--radius-sm);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 20px;
-            margin-bottom: 16px;
-        }
-
-        .stat-value {
-            font-family: 'Syne', sans-serif;
-            font-size: 32px;
-            font-weight: 800;
-            color: var(--text-primary);
-            line-height: 1;
-            margin-bottom: 4px;
-        }
-
-        .stat-label {
-            font-size: 13px;
-            color: var(--text-secondary);
-            font-weight: 500;
-        }
-
-        /* ── Score Ring ──────────────────────────────────────── */
-        .score-ring-wrap {
-            position: relative;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .score-ring-text {
-            position: absolute;
-            text-align: center;
-        }
-
-        .score-ring-text .score-num {
-            font-family: 'Syne', sans-serif;
-            font-size: 28px;
-            font-weight: 800;
-            display: block;
-            line-height: 1;
-        }
-
-        .score-ring-text .score-label {
-            font-size: 10px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* ── Score Bar ───────────────────────────────────────── */
-        .score-bar-wrap { margin-bottom: 14px; }
-
-        .score-bar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-        }
-
-        .score-bar-label { font-size: 13px; font-weight: 500; }
-
-        .score-bar-value {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
-            font-weight: 500;
-        }
-
-        .score-bar-track {
-            height: 6px;
-            background: var(--bg-input);
-            border-radius: 99px;
-            overflow: hidden;
-        }
-
-        .score-bar-fill {
-            height: 100%;
-            border-radius: 99px;
-            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* ── Buttons ─────────────────────────────────────────── */
-        .btn-primary-custom {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            border-radius: var(--radius-sm);
-            padding: 10px 20px;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all var(--transition);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-primary-custom:hover {
-            background: var(--accent-light);
-            box-shadow: 0 0 20px var(--accent-glow);
-            transform: translateY(-1px);
-        }
-
-        .btn-ghost {
-            background: transparent;
-            color: var(--text-secondary);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 10px 20px;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all var(--transition);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .btn-ghost:hover {
-            border-color: var(--border-bright);
-            color: var(--text-primary);
-            background: var(--bg-card);
-        }
-
-        /* ── Tags / Badges ───────────────────────────────────── */
-        .tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 3px 10px;
-            border-radius: 99px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .tag-accent    { background: rgba(108,99,255,0.15); color: var(--accent-light); border: 1px solid rgba(108,99,255,0.3); }
-        .tag-emerald   { background: var(--emerald-dim); color: var(--emerald); border: 1px solid rgba(16,217,160,0.3); }
-        .tag-amber     { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,166,35,0.3); }
-        .tag-rose      { background: var(--rose-dim); color: var(--rose); border: 1px solid rgba(255,79,106,0.3); }
-        .tag-sky       { background: var(--sky-dim); color: var(--sky); border: 1px solid rgba(56,189,248,0.3); }
-        .tag-muted     { background: rgba(255,255,255,0.05); color: var(--text-secondary); border: 1px solid var(--border); }
-
-        /* Priority badges */
-        .priority-critical { background: rgba(255,79,106,0.15); color: #ff4f6a; border: 1px solid rgba(255,79,106,0.35); }
-        .priority-high     { background: rgba(249,115,22,0.15); color: #fb923c; border: 1px solid rgba(249,115,22,0.35); }
-        .priority-medium   { background: rgba(245,166,35,0.15); color: var(--amber); border: 1px solid rgba(245,166,35,0.35); }
-        .priority-low      { background: var(--emerald-dim); color: var(--emerald); border: 1px solid rgba(16,217,160,0.3); }
-
-        /* ── Feedback Cards ──────────────────────────────────── */
-        .feedback-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            padding: 20px;
-            margin-bottom: 12px;
-            transition: all var(--transition);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .feedback-card::before {
-            content: '';
-            position: absolute;
-            left: 0; top: 0; bottom: 0;
-            width: 3px;
-            background: var(--fb-color, var(--accent));
-        }
-
-        .feedback-card:hover {
-            border-color: var(--border-bright);
-            background: var(--bg-card-hover);
-        }
-
-        .feedback-card.addressed {
-            opacity: 0.5;
-        }
-
-        .feedback-card.addressed .feedback-title {
-            text-decoration: line-through;
-        }
-
-        /* ── Keyword Tags ────────────────────────────────────── */
-        .keyword-cloud { display: flex; flex-wrap: wrap; gap: 8px; }
-
-        .keyword-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 5px 12px;
-            border-radius: 99px;
-            font-size: 12px;
-            font-weight: 500;
-            border: 1px solid var(--border);
-            background: var(--bg-input);
-            color: var(--text-secondary);
-            transition: all var(--transition);
-            cursor: default;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .keyword-tag.matched {
-            background: var(--emerald-dim);
-            border-color: rgba(16,217,160,0.4);
-            color: var(--emerald);
-        }
-
-        .keyword-tag.missing {
-            background: var(--rose-dim);
-            border-color: rgba(255,79,106,0.4);
-            color: var(--rose);
-        }
-
-        /* ── Upload Zone ─────────────────────────────────────── */
-        .upload-zone {
-            border: 2px dashed var(--border);
-            border-radius: var(--radius-xl);
-            padding: 60px 40px;
-            text-align: center;
-            cursor: pointer;
-            transition: all var(--transition);
-            position: relative;
-            overflow: hidden;
-            background: var(--bg-card);
-        }
-
-        .upload-zone::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(ellipse at center, rgba(108,99,255,0.05) 0%, transparent 70%);
-            opacity: 0;
-            transition: opacity var(--transition);
-        }
-
-        .upload-zone:hover,
-        .upload-zone.drag-over {
-            border-color: var(--accent);
-            box-shadow: 0 0 40px var(--accent-glow);
-        }
-
-        .upload-zone:hover::before,
-        .upload-zone.drag-over::before { opacity: 1; }
-
-        .upload-icon {
-            font-size: 52px;
-            color: var(--text-muted);
-            display: block;
-            margin-bottom: 16px;
-            transition: all var(--transition);
-        }
-
-        .upload-zone:hover .upload-icon,
-        .upload-zone.drag-over .upload-icon {
-            color: var(--accent-light);
-            transform: scale(1.1) translateY(-4px);
-        }
-
-        /* ── Form Controls ───────────────────────────────────── */
-        .form-control-dark {
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            color: var(--text-primary);
-            padding: 12px 16px;
-            font-family: 'DM Sans', sans-serif;
-            font-size: 14px;
-            width: 100%;
-            transition: all var(--transition);
-            outline: none;
-        }
-
-        .form-control-dark::placeholder { color: var(--text-muted); }
-
-        .form-control-dark:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px var(--accent-glow);
-        }
-
-        /* ── Progress Ring (SVG) ─────────────────────────────── */
-        .ring-svg { transform: rotate(-90deg); }
-        .ring-track { fill: none; stroke: var(--border); stroke-width: 6; }
-        .ring-fill  {
-            fill: none;
-            stroke-width: 6;
-            stroke-linecap: round;
-            transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* ── Alerts ──────────────────────────────────────────── */
-        .alert-custom {
-            border-radius: var(--radius-md);
-            padding: 14px 18px;
-            border: 1px solid;
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            font-size: 14px;
-        }
-
-        .alert-success { background: var(--emerald-dim); border-color: rgba(16,217,160,0.3); color: var(--emerald); }
-        .alert-warning { background: var(--amber-dim);   border-color: rgba(245,166,35,0.3);  color: var(--amber); }
-        .alert-danger  { background: var(--rose-dim);    border-color: rgba(255,79,106,0.3);  color: var(--rose); }
-        .alert-info    { background: var(--sky-dim);     border-color: rgba(56,189,248,0.3);  color: var(--sky); }
-
-        /* ── Processing Spinner ──────────────────────────────── */
-        .processing-pulse {
-            width: 12px; height: 12px;
-            background: var(--amber);
-            border-radius: 50%;
-            display: inline-block;
-            animation: pulse-dot 1.4s ease-in-out infinite;
-        }
-
-        @keyframes pulse-dot {
-            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
-            40%           { transform: scale(1.2); opacity: 1; }
-        }
-
-        /* ── Skeleton Loading ────────────────────────────────── */
-        .skeleton {
-            background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
-            background-size: 200% 100%;
-            animation: skeleton-shimmer 1.5s infinite;
-            border-radius: var(--radius-sm);
-        }
-
-        @keyframes skeleton-shimmer {
-            0%   { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-
-        /* ── Tooltip ─────────────────────────────────────────── */
-        [data-tooltip] { position: relative; cursor: help; }
-
-        [data-tooltip]::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: calc(100% + 8px);
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 6px 10px;
-            font-size: 12px;
-            white-space: nowrap;
-            color: var(--text-primary);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity var(--transition);
-            z-index: 999;
-        }
-
-        [data-tooltip]:hover::after { opacity: 1; }
-
-        /* ── Mobile Toggle ───────────────────────────────────── */
-        .sidebar-toggle {
-            display: none;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            color: var(--text-primary);
-            padding: 8px 10px;
-            cursor: pointer;
-        }
-
-        /* ── Section Divider ─────────────────────────────────── */
-        .section-divider {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin: 32px 0 24px;
-        }
-
-        .section-divider-title {
-            font-family: 'Syne', sans-serif;
-            font-size: 16px;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-        .section-divider-line {
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
-
-        /* ── Toast Notification ──────────────────────────────── */
-        #toast-container {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .toast-item {
-            background: var(--bg-surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
-            padding: 14px 18px;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            box-shadow: var(--shadow-lg);
-            animation: toast-in 0.3s ease;
-            min-width: 280px;
-        }
-
-        @keyframes toast-in {
-            from { transform: translateY(16px); opacity: 0; }
-            to   { transform: translateY(0);    opacity: 1; }
-        }
-
-        /* ── ATS Compatibility Badge ──────────────────────────── */
-        .ats-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            border-radius: var(--radius-md);
-            font-weight: 700;
-            font-size: 13px;
-            font-family: 'Syne', sans-serif;
-        }
-
-        /* ── Responsive ──────────────────────────────────────── */
-        @media (max-width: 991px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            .main-content {
-                margin-left: 0;
-            }
-            .sidebar-toggle {
-                display: flex;
-                align-items: center;
-            }
-            .page-content { padding: 20px 16px; }
-        }
-
-        /* ── Animation Utilities ─────────────────────────────── */
-        .fade-up {
-            animation: fade-up 0.5s ease both;
-        }
-
-        @keyframes fade-up {
-            from { opacity: 0; transform: translateY(16px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-
-        .stagger-1 { animation-delay: 0.05s; }
-        .stagger-2 { animation-delay: 0.10s; }
-        .stagger-3 { animation-delay: 0.15s; }
-        .stagger-4 { animation-delay: 0.20s; }
-
-        /* override Bootstrap defaults to match dark theme */
-        .form-control, .form-select, textarea {
-            background-color: var(--bg-input) !important;
-            border-color: var(--border) !important;
-            color: var(--text-primary) !important;
-        }
-        .form-control:focus, .form-select:focus, textarea:focus {
-            border-color: var(--accent) !important;
-            box-shadow: 0 0 0 3px var(--accent-glow) !important;
-        }
-        .modal-content {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-xl);
-        }
-        .modal-header, .modal-footer {
-            border-color: var(--border);
+        *{box-sizing:border-box;margin:0;padding:0}
+        html{scroll-behavior:smooth}
+        body{font-family:'Inter',sans-serif;background:#0f1117;color:#e2e8f0;font-size:14px;line-height:1.6;min-height:100vh;overflow-x:hidden}
+        ::-webkit-scrollbar{width:5px;height:5px}
+        ::-webkit-scrollbar-track{background:#0f1117}
+        ::-webkit-scrollbar-thumb{background:#2d3148;border-radius:99px}
+        .layout{display:flex;min-height:100vh}
+
+        /* SIDEBAR */
+        .sidebar{width:230px;min-height:100vh;background:#12141e;border-right:1px solid #1e2130;display:flex;flex-direction:column;position:fixed;left:0;top:0;bottom:0;z-index:100;transition:transform .25s ease}
+        .sb-brand{padding:18px 18px 14px;border-bottom:1px solid #1e2130;display:flex;align-items:center;gap:10px}
+        .sb-brand .icon{width:32px;height:32px;background:#6c63ff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;box-shadow:0 0 16px rgba(108,99,255,.3)}
+        .sb-brand .bname{font-size:14px;font-weight:700;color:#f8fafc}
+        .sb-brand .btag{font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:.8px}
+        .sb-nav{flex:1;padding:10px 8px;overflow-y:auto}
+        .sb-sec{font-size:10px;font-weight:600;color:#334155;text-transform:uppercase;letter-spacing:1.2px;padding:10px 10px 5px}
+        .sb-link{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;color:#64748b;text-decoration:none;font-size:13px;font-weight:500;transition:all .15s;margin-bottom:1px;cursor:pointer;border:none;background:none;width:100%;text-align:left;position:relative}
+        .sb-link i{font-size:14px;flex-shrink:0}
+        .sb-link:hover{color:#e2e8f0;background:#1e2130}
+        .sb-link.active{color:#a5b4fc;background:rgba(108,99,255,.12)}
+        .sb-link.active::before{content:'';position:absolute;left:0;top:6px;bottom:6px;width:2px;background:#6c63ff;border-radius:0 2px 2px 0}
+        .sb-badge{margin-left:auto;background:rgba(108,99,255,.2);color:#a5b4fc;font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;font-family:'JetBrains Mono',monospace}
+        .sb-footer{padding:10px 8px;border-top:1px solid #1e2130}
+        .sb-user{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:8px;background:#1e2130}
+        .sb-avatar{width:28px;height:28px;border-radius:50%;background:#6c63ff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+        .sb-uname{font-size:12px;font-weight:600;color:#e2e8f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .sb-uplan{font-size:10px;color:#10d9a0;text-transform:uppercase;letter-spacing:.4px}
+        .sb-logout{background:none;border:none;color:#475569;cursor:pointer;padding:4px;border-radius:5px;font-size:14px;flex-shrink:0;transition:color .15s;line-height:1}
+        .sb-logout:hover{color:#e2e8f0}
+
+        /* MAIN */
+        .main{margin-left:230px;flex:1;display:flex;flex-direction:column;min-height:100vh}
+        .topbar{height:54px;background:#12141e;border-bottom:1px solid #1e2130;display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:50}
+        .tb-toggle{display:none;background:none;border:1px solid #2d3148;border-radius:6px;color:#94a3b8;padding:5px 8px;cursor:pointer;font-size:14px;line-height:1}
+        .tb-title{font-size:14px;font-weight:600;color:#f8fafc;flex:1}
+        .btn-analyze{display:flex;align-items:center;gap:6px;background:#6c63ff;color:#fff;border:none;border-radius:7px;padding:7px 14px;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s}
+        .btn-analyze:hover{background:#8b84ff;box-shadow:0 0 16px rgba(108,99,255,.25)}
+        .page-body{flex:1;padding:24px}
+        .flash{padding:11px 14px;border-radius:8px;font-size:13px;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+        .flash-ok{background:rgba(16,217,160,.07);border:1px solid rgba(16,217,160,.2);color:#10d9a0}
+        .flash-err{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);color:#f87171}
+
+        /* CARDS */
+        .card{background:#12141e;border:1px solid #1e2130;border-radius:12px}
+        .card:hover{border-color:#2d3148}
+        .card-p{padding:20px}
+        .stat-card{background:#12141e;border:1px solid #1e2130;border-radius:11px;padding:18px;position:relative;overflow:hidden;transition:all .2s}
+        .stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,#6c63ff)}
+        .stat-card:hover{border-color:#2d3148;transform:translateY(-1px)}
+        .stat-num{font-size:26px;font-weight:700;color:#f8fafc;font-family:'JetBrains Mono',monospace;line-height:1;margin-bottom:4px}
+        .stat-lbl{font-size:12px;color:#64748b}
+        .stat-icon{font-size:20px;margin-bottom:10px;display:block}
+
+        /* SCORE RING */
+        .ring-svg{transform:rotate(-90deg)}
+        .ring-track{fill:none;stroke:#1e2130;stroke-width:5}
+        .ring-fill{fill:none;stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)}
+
+        /* BARS */
+        .bar-row{margin-bottom:11px}
+        .bar-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+        .bar-lbl{font-size:12px;color:#94a3b8}
+        .bar-val{font-size:11px;font-family:'JetBrains Mono',monospace;color:#64748b}
+        .bar-track{height:4px;background:#1e2130;border-radius:99px;overflow:hidden}
+        .bar-fill{height:100%;border-radius:99px;width:0%;transition:width 1s cubic-bezier(.4,0,.2,1)}
+
+        /* TAGS */
+        .tag{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
+        .tag-purple{background:rgba(108,99,255,.12);color:#a5b4fc;border:1px solid rgba(108,99,255,.2)}
+        .tag-green{background:rgba(16,217,160,.08);color:#10d9a0;border:1px solid rgba(16,217,160,.2)}
+        .tag-red{background:rgba(239,68,68,.08);color:#f87171;border:1px solid rgba(239,68,68,.2)}
+        .tag-amber{background:rgba(245,158,11,.08);color:#fbbf24;border:1px solid rgba(245,158,11,.2)}
+        .tag-sky{background:rgba(56,189,248,.08);color:#38bdf8;border:1px solid rgba(56,189,248,.2)}
+        .tag-gray{background:#1e2130;color:#64748b;border:1px solid #2d3148}
+        .pri-critical{background:rgba(239,68,68,.08);color:#f87171;border:1px solid rgba(239,68,68,.2)}
+        .pri-high{background:rgba(249,115,22,.08);color:#fb923c;border:1px solid rgba(249,115,22,.2)}
+        .pri-medium{background:rgba(245,158,11,.08);color:#fbbf24;border:1px solid rgba(245,158,11,.2)}
+        .pri-low{background:rgba(16,217,160,.08);color:#10d9a0;border:1px solid rgba(16,217,160,.2)}
+
+        /* KEYWORDS */
+        .kw-cloud{display:flex;flex-wrap:wrap;gap:6px}
+        .kw{display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:99px;font-size:11px;font-family:'JetBrains Mono',monospace;border:1px solid #2d3148;background:#1e2130;color:#64748b}
+        .kw.matched{background:rgba(16,217,160,.06);border-color:rgba(16,217,160,.25);color:#10d9a0}
+        .kw.missing{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.25);color:#f87171}
+
+        /* FEEDBACK */
+        .fb-card{background:#0f1117;border:1px solid #1e2130;border-left:3px solid var(--bc,#6c63ff);border-radius:9px;padding:14px;margin-bottom:8px;transition:all .2s}
+        .fb-card:hover{border-color:#2d3148;border-left-color:var(--bc)}
+        .fb-card.addressed{opacity:.4}
+        .fb-card.addressed .fb-title{text-decoration:line-through}
+
+        /* BUTTONS */
+        .btn-primary{display:inline-flex;align-items:center;gap:6px;background:#6c63ff;color:#fff;border:none;border-radius:7px;padding:8px 16px;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s}
+        .btn-primary:hover{background:#8b84ff;transform:translateY(-1px)}
+        .btn-ghost{display:inline-flex;align-items:center;gap:6px;background:transparent;color:#64748b;border:1px solid #2d3148;border-radius:7px;padding:8px 16px;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;transition:all .2s}
+        .btn-ghost:hover{border-color:#475569;color:#e2e8f0;background:#1e2130}
+        .btn-icon{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:6px;background:#1e2130;border:1px solid #2d3148;color:#64748b;cursor:pointer;font-size:13px;transition:all .2s}
+        .btn-icon:hover{background:#2d3148;color:#e2e8f0}
+
+        /* FORM */
+        .form-input{width:100%;background:#0f1117;border:1px solid #2d3148;border-radius:7px;color:#f1f5f9;padding:10px 13px;font-family:'Inter',sans-serif;font-size:13px;outline:none;transition:border-color .2s,box-shadow .2s}
+        .form-input::placeholder{color:#475569}
+        .form-input:focus{border-color:#6c63ff;box-shadow:0 0 0 3px rgba(108,99,255,.1)}
+        textarea.form-input{resize:vertical}
+        .field-lbl{display:block;font-size:11px;font-weight:600;color:#475569;text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+
+        /* MODAL */
+        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:999;display:none;align-items:center;justify-content:center;padding:20px}
+        .modal-overlay.open{display:flex}
+        .modal-box{background:#12141e;border:1px solid #2d3148;border-radius:16px;width:100%;max-width:500px;box-shadow:0 32px 80px rgba(0,0,0,.6);animation:min .2s ease}
+        @keyframes min{from{transform:translateY(14px);opacity:0}to{transform:translateY(0);opacity:1}}
+        .modal-hd{padding:20px 22px 16px;border-bottom:1px solid #1e2130;display:flex;align-items:center;justify-content:space-between}
+        .modal-hd h3{font-size:15px;font-weight:700;color:#f8fafc}
+        .modal-close{background:none;border:none;color:#475569;font-size:17px;cursor:pointer;padding:3px;border-radius:5px;line-height:1;transition:color .15s}
+        .modal-close:hover{color:#e2e8f0}
+        .modal-body{padding:20px 22px}
+        .modal-ft{padding:14px 22px;border-top:1px solid #1e2130;display:flex;gap:8px;justify-content:flex-end}
+
+        /* UPLOAD ZONE */
+        .upload-zone{border:2px dashed #2d3148;border-radius:10px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;background:#0f1117;position:relative;overflow:hidden}
+        .upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;font-size:0}
+        .upload-zone:hover,.upload-zone.over{border-color:#6c63ff;background:rgba(108,99,255,.03)}
+        .uz-icon{font-size:30px;color:#334155;display:block;margin-bottom:8px;transition:color .2s}
+        .upload-zone:hover .uz-icon,.upload-zone.over .uz-icon{color:#6c63ff}
+        .uz-h{font-size:13px;font-weight:600;color:#94a3b8;margin-bottom:3px}
+        .uz-p{font-size:11px;color:#475569}
+        .uz-sel{margin-top:10px;padding:9px 12px;background:#1e2130;border-radius:7px;display:none;text-align:left;border:1px solid rgba(16,217,160,.25)}
+        .uz-fname{font-size:12px;color:#10d9a0;font-weight:500}
+        .uz-fsize{font-size:10px;color:#475569;margin-top:1px}
+        .up-prog{display:none;margin-top:12px}
+        .up-lbl{font-size:11px;color:#64748b;display:flex;justify-content:space-between;margin-bottom:5px}
+        .up-track{height:3px;background:#1e2130;border-radius:99px;overflow:hidden}
+        .up-fill{height:100%;background:linear-gradient(90deg,#6c63ff,#a5b4fc);border-radius:99px;width:0%;transition:width .3s}
+
+        /* DIVIDER */
+        .sec-hd{display:flex;align-items:center;gap:10px;margin:24px 0 16px}
+        .sec-hd h3{font-size:13px;font-weight:700;color:#94a3b8;white-space:nowrap}
+        .sec-hd .line{flex:1;height:1px;background:#1e2130}
+
+        /* TOAST */
+        #toasts{position:fixed;bottom:18px;right:18px;z-index:9999;display:flex;flex-direction:column;gap:7px}
+        .toast{background:#1e2130;border:1px solid #2d3148;border-radius:9px;padding:11px 14px;font-size:13px;display:flex;align-items:center;gap:9px;box-shadow:0 8px 32px rgba(0,0,0,.4);animation:tin .2s ease;min-width:240px;max-width:320px}
+        @keyframes tin{from{transform:translateX(14px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+        /* MISC */
+        .fade-up{animation:fup .35s ease both}
+        @keyframes fup{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+        @media(max-width:900px){
+            .sidebar{transform:translateX(-100%)}
+            .sidebar.open{transform:translateX(0)}
+            .main{margin-left:0}
+            .tb-toggle{display:flex;align-items:center}
+            .page-body{padding:16px}
         }
     </style>
-
     @stack('styles')
 </head>
-
 <body>
-<div class="app-wrapper">
+<div class="layout">
 
-    <!-- ══ SIDEBAR ═══════════════════════════════════════════ -->
-    <aside class="sidebar" id="sidebar">
-        <!-- Brand -->
-        <div class="sidebar-brand">
-            <div class="brand-icon">⚡</div>
-            <div>
-                <div class="brand-name">ResumeIQ</div>
-                <div class="brand-tagline">ATF Tracker</div>
-            </div>
+{{-- SIDEBAR --}}
+<aside class="sidebar" id="sidebar">
+    <div class="sb-brand">
+        <div class="icon">⚡</div>
+        <div>
+            <div class="bname">ResumeIQ</div>
+            <div class="btag">ATS Tracker</div>
         </div>
-
-        <!-- Navigation -->
-        <nav class="sidebar-nav">
-            <div class="nav-section-label">Main</div>
-
-            <a href="{{ route('dashboard') }}"
-               class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                <i class="bi bi-grid-1x2"></i>
-                Dashboard
-            </a>
-
-            <a href="{{ route('resumes.index') }}"
-               class="nav-link {{ request()->routeIs('resumes.*') ? 'active' : '' }}">
-                <i class="bi bi-file-earmark-person"></i>
-                My Resumes
-                {{-- @if(auth()->user()->resumes()->pending()->count() > 0)
-                    <span class="nav-badge">{{ auth()->user()->resumes()->pending()->count() }}</span>
-                @endif --}}
-            </a>
-
-            <div class="nav-section-label" style="margin-top:12px;">Actions</div>
-
-            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#uploadModal">
-                <i class="bi bi-cloud-upload"></i>
-                Upload Resume
-            </a>
-
-            <div class="nav-section-label" style="margin-top:12px;">Account</div>
-
-            <a href="#" class="nav-link">
-                <i class="bi bi-person"></i>
-                Profile
-            </a>
-
+    </div>
+    <nav class="sb-nav">
+        <div class="sb-sec">Main</div>
+        <a href="{{ route('dashboard') }}" class="sb-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+            <i class="bi bi-grid-1x2"></i> Dashboard
+        </a>
+        <a href="{{ route('resumes.index') }}" class="sb-link {{ request()->routeIs('resumes.*') ? 'active' : '' }}">
+            <i class="bi bi-file-earmark-person"></i> My Resumes
+            @php $pCount = auth()->user()->resumes()->whereIn('status',['uploaded','processing'])->count(); @endphp
+            @if($pCount > 0)<span class="sb-badge">{{ $pCount }}</span>@endif
+        </a>
+        <div class="sb-sec" style="margin-top:6px;">Actions</div>
+        <button class="sb-link" id="openUploadSb">
+            <i class="bi bi-cloud-upload"></i> Upload Resume
+        </button>
+    </nav>
+    <div class="sb-footer">
+        <div class="sb-user">
+            <div class="sb-avatar">{{ strtoupper(substr(auth()->user()->name,0,2)) }}</div>
+            <div style="flex:1;min-width:0;">
+                <div class="sb-uname">{{ auth()->user()->name }}</div>
+                <div class="sb-uplan">{{ ucfirst(auth()->user()->plan) }}</div>
+            </div>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" class="nav-link w-100 text-start" style="border:none; background:none;">
+                <button type="submit" class="sb-logout" title="Sign out">
                     <i class="bi bi-box-arrow-right"></i>
-                    Sign Out
                 </button>
             </form>
-        </nav>
+        </div>
+    </div>
+</aside>
 
-        <!-- User Footer -->
-        <div class="sidebar-footer">
-            <div class="user-card">
-                <div class="user-avatar">
-                    {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
+{{-- MAIN --}}
+<div class="main">
+    <header class="topbar">
+        <button class="tb-toggle" id="sbToggle"><i class="bi bi-list"></i></button>
+        <div class="tb-title">@yield('page-title','Dashboard')</div>
+        <div>
+            <button class="btn-analyze" id="openUploadTop">
+                <i class="bi bi-plus-lg"></i>
+                <span>Analyze Resume</span>
+            </button>
+        </div>
+    </header>
+
+    @if(session('success'))
+    <div style="padding:14px 24px 0;">
+        <div class="flash flash-ok"><i class="bi bi-check-circle-fill"></i> {{ session('success') }}</div>
+    </div>
+    @endif
+    @if(session('error'))
+    <div style="padding:14px 24px 0;">
+        <div class="flash flash-err"><i class="bi bi-exclamation-triangle-fill"></i> {{ session('error') }}</div>
+    </div>
+    @endif
+
+    <main class="page-body">@yield('content')</main>
+</div>
+</div>
+
+{{-- Sidebar overlay --}}
+<div id="sbOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;" onclick="closeSidebar()"></div>
+
+{{-- UPLOAD MODAL --}}
+<div class="modal-overlay" id="uploadModal">
+    <div class="modal-box">
+        <div class="modal-hd">
+            <h3><i class="bi bi-cpu" style="color:#6c63ff;margin-right:6px;"></i>Analyze Resume</h3>
+            <button class="modal-close" id="closeModal">✕</button>
+        </div>
+        <div class="modal-body">
+            {{-- Drop Zone — file input covers the whole zone so clicking anywhere works --}}
+            <div class="upload-zone" id="dropZone">
+                <input type="file" id="resumeInput" accept=".pdf,.docx,.doc,.txt">
+                <span class="uz-icon"><i class="bi bi-cloud-arrow-up"></i></span>
+                <div class="uz-h">Drop your resume here, or click to browse</div>
+                <div class="uz-p">PDF · DOCX · TXT — Max 5 MB</div>
+                <div class="uz-sel" id="fileSelected">
+                    <div class="uz-fname" id="selName"></div>
+                    <div class="uz-fsize" id="selSize"></div>
+                </div>
+            </div>
+
+            <div id="uploadErr" style="display:none;margin-top:10px;" class="flash flash-err">
+                <i class="bi bi-exclamation-triangle-fill"></i> <span id="uploadErrMsg"></span>
+            </div>
+
+            {{-- Job targeting --}}
+            <div style="margin-top:18px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                    <div style="flex:1;height:1px;background:#1e2130;"></div>
+                    <span style="font-size:10px;color:#334155;text-transform:uppercase;letter-spacing:.8px;">Optional — Match a Job</span>
+                    <div style="flex:1;height:1px;background:#1e2130;"></div>
+                </div>
+                <div style="margin-bottom:10px;">
+                    <label class="field-lbl">Job Title</label>
+                    <input type="text" class="form-input" id="jobTitle" placeholder="e.g. Product Manager at Stripe">
                 </div>
                 <div>
-                    <div class="user-name">{{ auth()->user()->name }}</div>
-                    <div class="user-plan">{{ ucfirst(auth()->user()->plan) }} Plan</div>
+                    <label class="field-lbl">Job Description <span style="font-weight:400;text-transform:none;color:#334155;">(paste for keyword analysis)</span></label>
+                    <textarea class="form-input" id="jobDesc" rows="3" placeholder="Paste the job description here…"></textarea>
                 </div>
+            </div>
+
+            <div class="up-prog" id="upProg">
+                <div class="up-lbl"><span id="upLbl">Uploading…</span><span id="upPct">0%</span></div>
+                <div class="up-track"><div class="up-fill" id="upFill"></div></div>
             </div>
         </div>
-    </aside>
-
-    <!-- ══ MAIN CONTENT ══════════════════════════════════════ -->
-    <div class="main-content">
-
-        <!-- Topbar -->
-        <header class="topbar">
-            <button class="sidebar-toggle" id="sidebarToggle">
-                <i class="bi bi-list" style="font-size:18px;"></i>
+        <div class="modal-ft">
+            <button class="btn-ghost" id="cancelModal">Cancel</button>
+            <button class="btn-primary" id="uploadBtn">
+                <i class="bi bi-cpu"></i> Analyze
             </button>
-
-            <div class="topbar-title">@yield('page-title', 'Dashboard')</div>
-
-            <div class="topbar-actions">
-                <!-- Upload Button -->
-                <button class="btn-primary-custom" data-bs-toggle="modal" data-bs-target="#uploadModal">
-                    <i class="bi bi-plus-lg"></i>
-                    <span class="d-none d-md-inline">Analyze Resume</span>
-                </button>
-
-                <!-- Notification bell placeholder -->
-                <button class="btn-ghost" style="padding:10px 12px;">
-                    <i class="bi bi-bell" style="font-size:16px;"></i>
-                </button>
-            </div>
-        </header>
-
-        <!-- Flash Messages -->
-        @if(session('success'))
-            <div style="padding: 16px 32px 0;">
-                <div class="alert-custom alert-success fade-up">
-                    <i class="bi bi-check-circle-fill" style="font-size:18px;flex-shrink:0;"></i>
-                    <span>{{ session('success') }}</span>
-                </div>
-            </div>
-        @endif
-
-        @if(session('error'))
-            <div style="padding: 16px 32px 0;">
-                <div class="alert-custom alert-danger fade-up">
-                    <i class="bi bi-exclamation-triangle-fill" style="font-size:18px;flex-shrink:0;"></i>
-                    <span>{{ session('error') }}</span>
-                </div>
-            </div>
-        @endif
-
-        <!-- Page Content -->
-        <main class="page-content">
-            @yield('content')
-        </main>
-    </div>
-
-</div><!-- /app-wrapper -->
-
-<!-- ══ UPLOAD MODAL ══════════════════════════════════════════ -->
-<div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header" style="border-color:var(--border);padding:24px 28px 20px;">
-                <h5 class="modal-title font-display" id="uploadModalLabel"
-                    style="font-size:20px;font-weight:700;">
-                    ⚡ Analyze Your Resume
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" style="padding:0 28px 28px;">
-
-                <!-- Upload Form -->
-                <form id="uploadForm" enctype="multipart/form-data">
-                    @csrf
-
-                    <!-- Drop Zone -->
-                    <div class="upload-zone" id="dropZone" style="margin-bottom:24px;">
-                        <span class="upload-icon"><i class="bi bi-file-earmark-arrow-up"></i></span>
-                        <h4 style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:8px;">
-                            Drop your resume here
-                        </h4>
-                        <p style="color:var(--text-secondary);font-size:14px;margin-bottom:20px;">
-                            Supported formats: PDF, DOCX, TXT — Max 5MB
-                        </p>
-                        <input type="file" name="resume" id="resumeFile"
-                               accept=".pdf,.docx,.doc,.txt"
-                               style="display:none;" required>
-                        <button type="button" class="btn-primary-custom" onclick="$('#resumeFile').click()">
-                            <i class="bi bi-folder2-open"></i> Browse Files
-                        </button>
-                        <div id="fileNameDisplay" style="margin-top:16px;color:var(--emerald);font-size:14px;display:none;">
-                            <i class="bi bi-file-check"></i> <span id="fileName"></span>
-                        </div>
-                    </div>
-
-                    <!-- Optional Job Targeting -->
-                    <div style="margin-bottom:20px;">
-                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-                            <div style="flex:1;height:1px;background:var(--border);"></div>
-                            <span style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;">
-                                Optional: Target a Job
-                            </span>
-                            <div style="flex:1;height:1px;background:var(--border);"></div>
-                        </div>
-                        <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;">
-                            Add a job title or description to get keyword-matched analysis and ATS score for that specific role.
-                        </p>
-                        <div style="margin-bottom:12px;">
-                            <label style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;display:block;">
-                                Job Title
-                            </label>
-                            <input type="text" name="job_title" id="jobTitle"
-                                   class="form-control-dark"
-                                   placeholder="e.g. Senior Software Engineer at Google">
-                        </div>
-                        <div>
-                            <label style="font-size:13px;color:var(--text-secondary);margin-bottom:6px;display:block;">
-                                Job Description <span style="color:var(--text-muted);">(paste from job posting)</span>
-                            </label>
-                            <textarea name="job_description" id="jobDescription"
-                                      class="form-control-dark"
-                                      rows="4"
-                                      placeholder="Paste the full job description here for accurate keyword matching..."
-                                      style="resize:vertical;"></textarea>
-                        </div>
-                    </div>
-
-                    <!-- Upload Progress (hidden until submit) -->
-                    <div id="uploadProgress" style="display:none;margin-bottom:16px;">
-                        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-                            <span class="processing-pulse"></span>
-                            <span style="font-size:14px;color:var(--text-secondary);" id="progressLabel">
-                                Uploading resume...
-                            </span>
-                        </div>
-                        <div class="score-bar-track">
-                            <div class="score-bar-fill" id="progressBar"
-                                 style="background:var(--accent);width:0%;transition:width 0.3s ease;"></div>
-                        </div>
-                    </div>
-
-                    <!-- Errors -->
-                    <div id="uploadErrors" style="display:none;" class="alert-custom alert-danger">
-                        <i class="bi bi-exclamation-triangle-fill"></i>
-                        <span id="uploadErrorText"></span>
-                    </div>
-
-                    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:8px;">
-                        <button type="button" class="btn-ghost" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn-primary-custom" id="uploadBtn">
-                            <i class="bi bi-cpu"></i> Analyze Resume
-                        </button>
-                    </div>
-                </form>
-            </div>
         </div>
     </div>
 </div>
 
-<!-- Toast Container -->
-<div id="toast-container"></div>
-
-<!-- Sidebar Overlay (mobile) -->
-<div id="sidebarOverlay" style="
-    display:none;position:fixed;inset:0;
-    background:rgba(0,0,0,0.6);z-index:99;
-" onclick="closeSidebar()"></div>
-
-<!-- Bootstrap JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<div id="toasts"></div>
 
 <script>
-$(function () {
+$(function(){
+    $.ajaxSetup({headers:{'X-CSRF-TOKEN':$('meta[name="csrf-token"]').attr('content')}});
 
-    // ── Sidebar Toggle (mobile) ────────────────────────────
-    $('#sidebarToggle').on('click', function () {
-        $('#sidebar').addClass('open');
-        $('#sidebarOverlay').show();
+    // Sidebar
+    window.closeSidebar=function(){$('#sidebar').removeClass('open');$('#sbOverlay').hide()};
+    $('#sbToggle').on('click',function(){$('#sidebar').addClass('open');$('#sbOverlay').show()});
+
+    // Modal
+    function openModal(){resetUpload();$('#uploadModal').addClass('open')}
+    function closeModal(){$('#uploadModal').removeClass('open')}
+    $('#openUploadSb,#openUploadTop').on('click',openModal);
+    $('#closeModal,#cancelModal').on('click',closeModal);
+    $('#uploadModal').on('click',function(e){if($(e.target).is('#uploadModal'))closeModal()});
+
+    // File input change — fires when user selects via dialog OR we programmatically set
+    $('#resumeInput').on('change',function(){
+        if(this.files&&this.files.length>0)handleFile(this.files[0]);
     });
 
-    window.closeSidebar = function () {
-        $('#sidebar').removeClass('open');
-        $('#sidebarOverlay').hide();
-    };
-
-    // ── CSRF Setup for AJAX ────────────────────────────────
-    $.ajaxSetup({
-        headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') }
+    // Drag events on zone (file input overlay handles click-to-browse natively)
+    $('#dropZone').on('dragover',function(e){
+        e.preventDefault();e.stopPropagation();$(this).addClass('over');
+    }).on('dragleave dragend',function(e){
+        e.preventDefault();e.stopPropagation();$(this).removeClass('over');
+    }).on('drop',function(e){
+        e.preventDefault();e.stopPropagation();$(this).removeClass('over');
+        var f=e.originalEvent.dataTransfer.files;
+        if(f&&f.length>0)handleFile(f[0]);
     });
 
-    // ── Drag-and-Drop Upload Zone ──────────────────────────
-    const $dropZone = $('#dropZone');
+    var pickedFile=null;
 
-    $dropZone.on('dragover dragleave', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        $(this).toggleClass('drag-over', e.type === 'dragover');
-    });
-
-    $dropZone.on('drop', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        $(this).removeClass('drag-over');
-        const files = e.originalEvent.dataTransfer.files;
-        if (files.length > 0) {
-            handleFileSelect(files[0]);
-        }
-    });
-
-    $('#resumeFile').on('change', function () {
-        if (this.files.length > 0) handleFileSelect(this.files[0]);
-    });
-
-    function handleFileSelect(file) {
-        const allowed = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'text/plain'];
-        if (file.size > 5 * 1024 * 1024) {
-            showUploadError('File too large. Maximum size is 5MB.');
-            return;
-        }
-        // Create FileList-compatible object
-        const dt = new DataTransfer();
-        dt.items.add(file);
-        document.getElementById('resumeFile').files = dt.files;
-
-        $('#fileName').text(file.name + ' (' + formatBytes(file.size) + ')');
-        $('#fileNameDisplay').show();
-        $('#uploadErrors').hide();
+    function handleFile(f){
+        $('#uploadErr').hide();
+        if(f.size>5*1024*1024){showErr('File too large — max 5 MB.');return}
+        var ext=f.name.split('.').pop().toLowerCase();
+        if(!['pdf','docx','doc','txt'].includes(ext)){showErr('Accepted formats: PDF, DOCX, DOC, TXT.');return}
+        pickedFile=f;
+        $('#selName').text(f.name);
+        $('#selSize').text(fmtB(f.size));
+        $('#fileSelected').show();
+        $('#dropZone').css('border-color','#10d9a0');
     }
 
-    function formatBytes(bytes) {
-        if (bytes < 1024) return bytes + ' B';
-        if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-        return (bytes / 1048576).toFixed(1) + ' MB';
+    function showErr(m){
+        $('#uploadErrMsg').text(m);$('#uploadErr').show();
+        pickedFile=null;$('#fileSelected').hide();$('#dropZone').css('border-color','');
     }
 
-    // ── Upload Form Submission ─────────────────────────────
-    $('#uploadForm').on('submit', function (e) {
-        e.preventDefault();
+    function resetUpload(){
+        pickedFile=null;
+        $('#resumeInput').val('');
+        $('#fileSelected').hide();
+        $('#dropZone').css('border-color','');
+        $('#uploadErr').hide();
+        $('#upProg').hide();
+        $('#upFill').css('width','0%');
+        $('#jobTitle,#jobDesc').val('');
+        $('#uploadBtn').prop('disabled',false).html('<i class="bi bi-cpu"></i> Analyze');
+    }
 
-        if (!$('#resumeFile')[0].files.length) {
-            showUploadError('Please select a resume file first.');
-            return;
-        }
+    function fmtB(b){
+        if(b<1024)return b+' B';
+        if(b<1048576)return(b/1024).toFixed(1)+' KB';
+        return(b/1048576).toFixed(1)+' MB';
+    }
 
-        const formData = new FormData(this);
+    // Submit
+    $('#uploadBtn').on('click',function(){
+        if(!pickedFile){showErr('Please select a resume file first.');return}
+        var fd=new FormData();
+        fd.append('resume',pickedFile,pickedFile.name);
+        fd.append('_token',$('meta[name="csrf-token"]').attr('content'));
+        fd.append('job_title',$('#jobTitle').val().trim());
+        fd.append('job_description',$('#jobDesc').val().trim());
 
-        $('#uploadBtn').prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Uploading...');
-        $('#uploadProgress').show();
-        $('#uploadErrors').hide();
+        $('#uploadBtn').prop('disabled',true).html('<i class="bi bi-hourglass-split"></i> Uploading…');
+        $('#upProg').show();$('#uploadErr').hide();
 
-        let progress = 0;
-        const progressInterval = setInterval(function () {
-            progress = Math.min(progress + Math.random() * 15, 85);
-            $('#progressBar').css('width', progress + '%');
-        }, 300);
+        var pct=0,ticker=setInterval(function(){
+            pct=Math.min(pct+Math.random()*10,85);
+            $('#upFill').css('width',pct+'%');$('#upPct').text(Math.round(pct)+'%');
+        },300);
 
         $.ajax({
-            url:         '{{ route("resumes.upload") }}',
-            type:        'POST',
-            data:        formData,
-            contentType: false,
-            processData: false,
-            success: function (response) {
-                clearInterval(progressInterval);
-                $('#progressBar').css('width', '100%');
-                $('#progressLabel').text('Analysis queued! Redirecting...');
-
-                showToast('✅ Resume uploaded! AI analysis starting...', 'success');
-
-                setTimeout(function () {
-                    window.location.href = response.redirect;
-                }, 1200);
+            url:'/resumes/upload',type:'POST',data:fd,contentType:false,processData:false,
+            success:function(r){
+                clearInterval(ticker);
+                $('#upFill').css('width','100%');$('#upPct').text('100%');$('#upLbl').text('Done! Redirecting…');
+                showToast('✅ Uploaded — analysis queued!','green');
+                setTimeout(function(){window.location.href=r.redirect},700);
             },
-            error: function (xhr) {
-                clearInterval(progressInterval);
-                $('#uploadProgress').hide();
-                $('#uploadBtn').prop('disabled', false).html('<i class="bi bi-cpu"></i> Analyze Resume');
-
-                const errors = xhr.responseJSON?.errors;
-                if (errors) {
-                    const msgs = Object.values(errors).flat().join(' ');
-                    showUploadError(msgs);
-                } else {
-                    showUploadError(xhr.responseJSON?.message || 'Upload failed. Please try again.');
+            error:function(xhr){
+                clearInterval(ticker);$('#upProg').hide();
+                $('#uploadBtn').prop('disabled',false).html('<i class="bi bi-cpu"></i> Analyze');
+                var m='Upload failed. Please try again.';
+                if(xhr.responseJSON){
+                    if(xhr.responseJSON.message)m=xhr.responseJSON.message;
+                    else if(xhr.responseJSON.errors)m=Object.values(xhr.responseJSON.errors).flat().join(' ');
                 }
+                showErr(m);
             }
         });
     });
 
-    function showUploadError(msg) {
-        $('#uploadErrorText').text(msg);
-        $('#uploadErrors').show();
-    }
-
-    // ── Toast Notifications ────────────────────────────────
-    window.showToast = function (message, type = 'info') {
-        const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
-        const colors = {
-            success: 'var(--emerald)',
-            error:   'var(--rose)',
-            warning: 'var(--amber)',
-            info:    'var(--sky)'
-        };
-
-        const $toast = $('<div class="toast-item">')
-            .html(`<span>${icons[type] || 'ℹ️'}</span><span style="color:${colors[type]}">${message}</span>`);
-
-        $('#toast-container').append($toast);
-
-        setTimeout(function () {
-            $toast.css({ opacity: 0, transform: 'translateY(8px)', transition: 'all 0.3s ease' });
-            setTimeout(() => $toast.remove(), 300);
-        }, 3500);
+    // Toast
+    window.showToast=function(msg,type){
+        var c={green:'#10d9a0',red:'#f87171',amber:'#fbbf24',blue:'#38bdf8'};
+        var $t=$('<div class="toast">').css('border-left','2px solid '+(c[type]||c.blue))
+              .html('<span style="color:'+(c[type]||c.blue)+'">'+msg+'</span>');
+        $('#toasts').append($t);
+        setTimeout(function(){$t.css({opacity:0,transition:'opacity .3s'});setTimeout(function(){$t.remove()},300)},3500);
     };
 
-    // ── Animate Score Bars on Page Load ───────────────────
-    function animateScoreBars() {
-        $('.score-bar-fill[data-target]').each(function () {
-            const $bar = $(this);
-            const target = $bar.data('target');
-            setTimeout(function () {
-                $bar.css('width', target + '%');
-            }, 200);
-        });
-    }
-    animateScoreBars();
+    // Animate bar fills
+    setTimeout(function(){$('[data-fill]').each(function(){$(this).css('width',$(this).data('fill')+'%')})},200);
 
-    // ── Animate Score Rings ────────────────────────────────
-    function animateRings() {
-        $('[data-ring-score]').each(function () {
-            const $ring = $(this);
-            const score = parseInt($ring.data('ring-score'));
-            const r     = 54;
-            const circ  = 2 * Math.PI * r;
-            const offset = circ - (score / 100) * circ;
-            setTimeout(function () {
-                $ring.css('stroke-dashoffset', offset);
-            }, 300);
+    // Animate score rings
+    setTimeout(function(){
+        $('[data-ring]').each(function(){
+            var s=parseInt($(this).data('ring')),r=52,c=2*Math.PI*r;
+            $(this).css('stroke-dashoffset',c-(s/100)*c);
         });
-    }
-    animateRings();
+    },300);
 });
 </script>
-
 @stack('scripts')
 </body>
 </html>

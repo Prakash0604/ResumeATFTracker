@@ -4,11 +4,12 @@ namespace App\Services;
 
 use App\Models\Resume;
 use App\Models\Analysis;
-use App\Models\Feedback;
+use App\Models\FeedbackItem;
 use App\Models\Skill;
 use App\Models\Keyword;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * ResumeAnalyzerService
@@ -46,7 +47,7 @@ class ResumeAnalyzerService
         // Step 1: Extract text if not already done
         if (empty($resume->raw_text)) {
             $rawText = $this->extractor->extract(
-                storage_path('app/' . $resume->file_path),
+                Storage::disk('local')->path($resume->file_path),
                 $resume->file_type
             );
             $resume->update(['raw_text' => $rawText]);
@@ -63,7 +64,7 @@ class ResumeAnalyzerService
         // Step 4-7: Persist all results in a transaction
         \DB::transaction(function () use ($resume, $analysisData, $duration, $aiResponse) {
             $this->persistAnalysis($resume, $analysisData, $duration, $aiResponse);
-            $this->persistFeedbacks($resume, $analysisData['feedbacks'] ?? []);
+            $this->persistFeedbackItems($resume, $analysisData['feedbacks'] ?? []);
             $this->persistSkills($resume, $analysisData['skills'] ?? []);
             $this->persistKeywords($resume, $analysisData['keywords'] ?? []);
         });
@@ -82,16 +83,24 @@ class ResumeAnalyzerService
     {
         $prompt = $this->buildPrompt($resume);
 
+        $requestData = [
+            "model" => env('OPENROUTER_MODEL', "google/gemma-4-31b-it:free"),
+            "messages" => [
+                ["role" => "user", "content" => $prompt]
+            ]
+        ];
+        
+        Log::info('API Request', ['data' => $requestData]);
+
         $response = Http::withHeaders([
-            'x-api-key'         => config('services.anthropic.api_key'),
-            'anthropic-version' => '2023-06-01',
-            'Content-Type'      => 'application/json',
-        ])->timeout(120)->post(self::CLAUDE_API_URL, [
-            'model'      => self::MODEL,
-            'max_tokens' => self::MAX_TOKENS,
-            'messages'   => [
-                ['role' => 'user', 'content' => $prompt],
-            ],
+            'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
+            'Content-Type' => 'application/json'
+        ])->timeout(120)->post(env('OPENROUTER_URL'), $requestData);
+
+        Log::info('API Response', [
+            'status' => $response->status(),
+            'body' => $response->body(),
+            'json' => $response->json()
         ]);
 
         if (!$response->successful()) {
@@ -317,12 +326,12 @@ PROMPT;
     }
 
     /** Delete old feedbacks and insert fresh ones */
-    private function persistFeedbacks(Resume $resume, array $feedbacks): void
+    private function persistFeedbackItems(Resume $resume, array $feedbacks): void
     {
-        $resume->feedbacks()->delete();
+        $resume->feedback_items()->delete();
 
         foreach ($feedbacks as $fb) {
-            Feedback::create([
+            FeedbackItem::create([
                 'resume_id'   => $resume->id,
                 'priority'    => $fb['priority'] ?? 'medium',
                 'category'    => $fb['category'] ?? 'other',
