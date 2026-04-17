@@ -8,30 +8,13 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
-/**
- * SendAnalysisCompleteNotification
- *
- * Listener for the ResumeAnalyzed event.
- * Implements ShouldQueue so the email sends asynchronously
- * without blocking the main analysis job.
- *
- * When fired, it:
- *  1. Sends an email to the resume owner with their score summary
- *  2. Includes a link back to the analysis page
- *
- * To disable email sending, simply remove this listener
- * from EventServiceProvider::$listen.
- */
+
 class SendAnalysisCompleteNotification implements ShouldQueue
 {
     use InteractsWithQueue;
 
-    /** Queue name for this listener */
     public string $queue = 'notifications';
 
-    /**
-     * Handle the ResumeAnalyzed event.
-     */
     public function handle(ResumeAnalyzed $event): void
     {
         $resume   = $event->resume;
@@ -72,9 +55,7 @@ class SendAnalysisCompleteNotification implements ShouldQueue
         ]);
     }
 
-    /**
-     * Handle a failed listener job.
-     */
+   
     public function failed(ResumeAnalyzed $event, \Throwable $exception): void
     {
         Log::error("Failed to send analysis notification for resume #{$event->resume->id}", [

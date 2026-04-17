@@ -5,22 +5,12 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-/**
- * DashboardController
- *
- * Shows the user's main dashboard with:
- * - Summary stats (total uploads, avg score, best score)
- * - Recent resume list with scores
- * - Score trend over time (for chart)
- * - Quick tips based on latest analysis
- */
 class DashboardController extends Controller
 {
     public function index()
     {
         $user = Auth::user();
 
-        // Aggregate stats for dashboard cards
         $stats = [
             'total_resumes'  => $user->resumes()->analyzed()->count(),
             'avg_score'      => (int) $user->resumes()->analyzed()
@@ -32,14 +22,12 @@ class DashboardController extends Controller
             'pending_count'  => $user->resumes()->pending()->count(),
         ];
 
-        // Latest 5 resumes with analysis
         $recentResumes = $user->resumes()
             ->with('analysis')
             ->latest()
             ->limit(5)
             ->get();
 
-        // Score trend data for Chart.js
         $scoreTrend = $user->resumes()
             ->analyzed()
             ->with('analysis')
@@ -54,7 +42,6 @@ class DashboardController extends Controller
             ])
             ->values();
 
-        // Most common missing keywords across all resumes
         $topMissingKeywords = DB::table('analyses')
             ->join('resumes', 'resumes.id', '=', 'analyses.resume_id')
             ->where('resumes.user_id', $user->id)

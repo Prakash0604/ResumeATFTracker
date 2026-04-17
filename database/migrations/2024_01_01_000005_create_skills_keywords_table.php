@@ -21,24 +21,15 @@ return new class extends Migration
             $table->foreignId('resume_id')->constrained()->cascadeOnDelete();
 
             $table->string('name', 100);                    // "Python", "Leadership", "MySQL"
-            $table->enum('category', [
-                'technical',     // Programming languages, algorithms
-                'framework',     // Laravel, React, Django
-                'tool',          // Git, Docker, Figma
-                'soft',          // Communication, teamwork
-                'language',      // English, Spanish (spoken languages)
-                'certification', // AWS Certified, PMP
-                'domain',        // Finance, Healthcare (domain knowledge)
-                'other'
-            ])->default('technical');
+            $table->string('category')->default('technical');
 
-            $table->enum('proficiency', [
-                'expert',        // 5+ years, lead projects
-                'advanced',      // 3-5 years
-                'intermediate',  // 1-3 years
-                'beginner',      // <1 year
-                'unknown'        // Cannot infer
-            ])->default('unknown');
+
+            $table->string('proficiency')->default('unknown');
+            // 'expert',        // 5+ years, lead projects
+            // 'advanced',      // 3-5 years
+            // 'intermediate',  // 1-3 years
+            // 'beginner',      // <1 year
+            // 'unknown'        // Cannot infer
 
             $table->boolean('is_in_job_description')->default(false); // Matched to JD
             $table->integer('mention_count')->default(1);  // How many times it appears

@@ -7,7 +7,6 @@
     $user = auth()->user();
 @endphp
 
-{{-- STATS ROW --}}
 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;">
     <div class="stat-card fade-up" style="--c:#6c63ff">
         <span class="stat-icon">📄</span>
@@ -31,10 +30,8 @@
     </div>
 </div>
 
-{{-- MAIN GRID --}}
 <div style="display:grid;grid-template-columns:1fr 340px;gap:16px;margin-bottom:16px;">
 
-    {{-- Score trend chart --}}
     <div class="card card-p fade-up">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
             <div>
@@ -44,7 +41,9 @@
             <span class="tag tag-green">Last 10</span>
         </div>
         @if($scoreTrend->count() > 0)
-            <canvas id="trendChart" height="100"></canvas>
+            <div style="position: relative; height: 250px; width: 100%;">
+                <canvas id="trendChart"></canvas>
+            </div>
         @else
             <div style="text-align:center;padding:50px 0;color:#334155;">
                 <div style="font-size:36px;margin-bottom:10px;">📈</div>
@@ -53,7 +52,6 @@
         @endif
     </div>
 
-    {{-- Recent resumes --}}
     <div class="card card-p fade-up" style="animation-delay:.05s;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
             <div style="font-size:14px;font-weight:700;color:#f8fafc;">Recent</div>
@@ -107,10 +105,8 @@
     </div>
 </div>
 
-{{-- BOTTOM ROW --}}
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
 
-    {{-- Missing keywords --}}
     @if($topMissingKeywords->count() > 0)
     <div class="card card-p fade-up">
         <div style="font-size:14px;font-weight:700;color:#f8fafc;margin-bottom:4px;">🔑 Commonly Missing Keywords</div>
@@ -123,7 +119,6 @@
     </div>
     @endif
 
-    {{-- Quick tips --}}
     <div class="card card-p fade-up">
         <div style="font-size:14px;font-weight:700;color:#f8fafc;margin-bottom:14px;">💡 ATS Quick Tips</div>
         @foreach([
@@ -150,7 +145,7 @@
 @endsection
 
 @push('scripts')
-{{-- <script>
+<script>
 $(function(){
     @if($scoreTrend->count() > 0)
     var td = @json($scoreTrend);
@@ -164,7 +159,7 @@ $(function(){
             datasets:[{label:'Score',data:td.map(d=>d.score),fill:true,backgroundColor:g,borderColor:'#6c63ff',borderWidth:2,pointBackgroundColor:'#a5b4fc',pointRadius:4,tension:.4}]
         },
         options:{
-            responsive:true,maintainAspectRatio:false,
+            responsive:true,maintainAspectRatio:true,
             plugins:{legend:{display:false},tooltip:{backgroundColor:'#12141e',borderColor:'#2d3148',borderWidth:1,titleColor:'#f8fafc',bodyColor:'#94a3b8',padding:10,callbacks:{label:c=>' Score: '+c.raw+'/100'}}},
             scales:{
                 x:{grid:{color:'#1e2130',drawBorder:false},ticks:{color:'#475569',font:{family:'Inter',size:11}}},
@@ -190,5 +185,5 @@ $(function(){
     },4000);
     @endif
 });
-</script> --}}
+</script>
 @endpush

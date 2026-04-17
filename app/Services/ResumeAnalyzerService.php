@@ -83,6 +83,19 @@ class ResumeAnalyzerService
     {
         $prompt = $this->buildPrompt($resume);
 
+        // $requestData = [
+        //     "model" => env('OPENROUTER_MODEL', ""),
+        //     "messages" => [
+        //         ["role" => "user", "content" => $prompt]
+        //     ]
+        // ];
+        
+        // Log::info('API Request', ['data' => $requestData]);
+
+        // $response = Http::withHeaders([
+        //     'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
+        //     'Content-Type' => 'application/json'
+        // ])->timeout(120)->post(env('OPENROUTER_URL'), $requestData);
         $requestData = [
             "model" => env('OPENROUTER_MODEL', "google/gemma-4-31b-it:free"),
             "messages" => [
@@ -100,7 +113,8 @@ class ResumeAnalyzerService
         Log::info('API Response', [
             'status' => $response->status(),
             'body' => $response->body(),
-            'json' => $response->json()
+            'json' => $response->json(),
+            'full response' =>$response
         ]);
 
         if (!$response->successful()) {
@@ -233,15 +247,27 @@ Be brutally honest. Identify ALL issues. Generate at minimum 5 feedbacks, maximu
 PROMPT;
     }
 
-    /**
-     * Parse Claude's JSON response.
-     * Handles cases where Claude may wrap JSON in markdown despite instructions.
-     */
     private function parseAIResponse(array $apiResponse): array
     {
-        $content = $apiResponse['content'][0]['text'] ?? '';
+        Log::info('Parsing AI Response', [
+            'response_structure' => array_keys($apiResponse),
+            'full_response' => $apiResponse
+        ]);
+        
+        // Check if response has Gemini API structure
+        if (isset($apiResponse['candidates'][0]['content']['parts'][0]['text'])) {
+            $content = $apiResponse['candidates'][0]['content']['parts'][0]['text'];
+        }
+        // Check if response has OpenRouter structure
+        elseif (isset($apiResponse['choices'][0]['message']['content'])) {
+            $content = $apiResponse['choices'][0]['message']['content'];
+        } else {
+            // Fallback: try to get content from old structure
+            $content = $apiResponse['content'][0]['text'] ?? '';
+        }
 
-        // Strip markdown code fences if present
+        Log::info('Extracted content', ['content' => substr($content, 0, 200)]);
+
         $content = preg_replace('/```(?:json)?\s*/i', '', $content);
         $content = preg_replace('/```\s*$/', '', $content);
         $content = trim($content);
@@ -249,14 +275,17 @@ PROMPT;
         $data = json_decode($content, true);
 
         if (json_last_error() !== JSON_ERROR_NONE) {
-            Log::error('Failed to parse AI response', ['content' => substr($content, 0, 500)]);
+            Log::error('Failed to parse AI response', [
+                'content' => substr($content, 0, 500), 
+                'json_error' => json_last_error_msg(),
+                'api_response_structure' => array_keys($apiResponse)
+            ]);
             throw new \RuntimeException('AI returned invalid JSON: ' . json_last_error_msg());
         }
 
         return $data;
     }
 
-    /** Save AI scores to analyses table */
     private function persistAnalysis(Resume $resume, array $data, float $duration, array $apiResponse): void
     {
         $scores  = $data['scores'] ?? [];
@@ -267,7 +296,6 @@ PROMPT;
         $kw      = $data['keywords'] ?? [];
         $cand    = $data['candidate'] ?? [];
 
-        // Update candidate info on the resume itself
         $resume->update([
             'candidate_name'     => $cand['name'] ?? null,
             'candidate_email'    => $cand['email'] ?? null,
@@ -325,7 +353,6 @@ PROMPT;
         );
     }
 
-    /** Delete old feedbacks and insert fresh ones */
     private function persistFeedbackItems(Resume $resume, array $feedbacks): void
     {
         $resume->feedback_items()->delete();
@@ -343,7 +370,6 @@ PROMPT;
         }
     }
 
-    /** Delete old skills and insert fresh extracted ones */
     private function persistSkills(Resume $resume, array $skills): void
     {
         $resume->skills()->delete();
@@ -360,7 +386,6 @@ PROMPT;
         }
     }
 
-    /** Build keyword frequency map from top_words */
     private function persistKeywords(Resume $resume, array $keywordData): void
     {
         $resume->keywords()->delete();

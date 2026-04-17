@@ -38,6 +38,7 @@ class ProcessResumeJob implements ShouldQueue
     ) {
         $this->onQueue('analysis');
     }
+    
 
     /**
      * Execute the job.

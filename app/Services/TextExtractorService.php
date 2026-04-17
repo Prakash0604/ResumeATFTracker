@@ -34,11 +34,7 @@ class TextExtractorService
         };
     }
 
-    /**
-     * Extract text from PDF using multiple fallback strategies:
-     * 1. pdftotext (best quality, requires poppler-utils on server)
-     * 2. smalot/pdfparser PHP library (no system dependency)
-     */
+  
     private function extractFromPdf(string $filePath): string
     {
         // Strategy 1: CLI pdftotext (preferred — handles complex layouts)
@@ -69,14 +65,9 @@ class TextExtractorService
         throw new \RuntimeException('Cannot extract text from PDF — ensure poppler-utils or smalot/pdfparser is installed.');
     }
 
-    /**
-     * Extract text from DOCX using phpoffice/phpword.
-     * DOCX is a ZIP archive containing XML — we parse the XML directly.
-     */
     private function extractFromDocx(string $filePath): string
     {
         if (!class_exists(\PhpOffice\PhpWord\IOFactory::class)) {
-            // Fallback: parse XML manually from ZIP
             return $this->extractDocxManually($filePath);
         }
 
@@ -101,10 +92,7 @@ class TextExtractorService
         return $this->cleanText($text);
     }
 
-    /**
-     * Manual DOCX extraction without PhpWord library.
-     * DOCX files are ZIP archives — we extract word/document.xml directly.
-     */
+  
     private function extractDocxManually(string $filePath): string
     {
         $zip = new \ZipArchive();
@@ -119,14 +107,12 @@ class TextExtractorService
             throw new \RuntimeException('word/document.xml not found in DOCX archive.');
         }
 
-        // Strip XML tags and decode entities
         $text = strip_tags(str_replace(['</w:p>', '</w:tr>'], "\n", $xml));
         $text = html_entity_decode($text, ENT_QUOTES, 'UTF-8');
 
         return $this->cleanText($text);
     }
 
-    /** Read plain text file directly */
     private function extractFromTxt(string $filePath): string
     {
         if (!file_exists($filePath)) {
@@ -136,28 +122,19 @@ class TextExtractorService
         return $this->cleanText(file_get_contents($filePath));
     }
 
-    /**
-     * Normalize extracted text:
-     * - Remove non-printable characters
-     * - Collapse multiple blank lines
-     * - Normalize whitespace
-     */
+   
     private function cleanText(string $text): string
     {
-        // Remove null bytes and control characters (except newlines/tabs)
         $text = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', '', $text);
 
-        // Collapse 3+ blank lines to 2
         $text = preg_replace('/\n{3,}/', "\n\n", $text);
 
-        // Trim each line
         $lines = array_map('trim', explode("\n", $text));
         $text  = implode("\n", $lines);
 
         return trim($text);
     }
 
-    /** Check if a CLI command exists on the system */
     private function commandExists(string $command): bool
     {
         return !empty(shell_exec("which {$command} 2>/dev/null"));

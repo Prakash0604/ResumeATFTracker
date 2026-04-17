@@ -26,13 +26,9 @@ class ResumeController extends Controller
         return view('resume.index', compact('resumes'));
     }
 
-    /**
-     * Show full analysis for a specific resume.
-     * Eager-loads all relationships to populate the dashboard.
-     */
+
     public function show(Resume $resume)
     {
-        // Policy: user can only see their own resumes
         $this->authorize('view', $resume);
 
         if ($resume->status !== 'analyzed') {
@@ -58,14 +54,11 @@ class ResumeController extends Controller
         $file     = $request->file('resume');
         $fileType = strtolower($file->getClientOriginalExtension());
 
-        // Generate secure, collision-proof filename
         $storedName = Str::uuid() . '.' . $fileType;
         $storagePath = "resumes/" . Auth::id() . "/{$storedName}";
 
-        // Store file (disk: 'local' by default, can swap to 's3')
         $dataim=Storage::put($storagePath, file_get_contents($file->getRealPath()));
 
-        // Create DB record
         $resume = Resume::create([
             'user_id'           => Auth::id(),
             'original_filename' => $file->getClientOriginalName(),
@@ -78,10 +71,8 @@ class ResumeController extends Controller
             'status'            => 'uploaded',
         ]);
 
-        // Increment user upload count
         Auth::user()->increment('upload_count');
         Log::info('File stored at: ' . $storagePath, ['file' => $file, 'file type' => $fileType, 'storage path' => $storagePath,'store name' => $storedName,'path' => $dataim,'resume'=>$resume]);
-        // Dispatch async job — returns immediately to client
         ProcessResumeJob::dispatch($resume);
 
         return response()->json([
