@@ -75,10 +75,6 @@ class ResumeAnalyzerService
         ]);
     }
 
-    /**
-     * Build the AI prompt and call the Anthropic API.
-     * Returns the raw response array.
-     */
     private function callClaudeAPI(Resume $resume): array
     {
         $prompt = $this->buildPrompt($resume);
